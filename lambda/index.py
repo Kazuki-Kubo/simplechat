@@ -20,7 +20,7 @@ bedrock_client = None
 
 # モデルID
 MODEL_ID = os.environ.get("MODEL_ID", "us.amazon.nova-lite-v1:0")
-url = "https://a7f1-34-19-120-107.ngrok-free.app/generate"
+api_url = "https://a7f1-34-19-120-107.ngrok-free.app/generate"
 
 def lambda_handler(event, context):
     try:
@@ -91,8 +91,8 @@ def lambda_handler(event, context):
         print("Calling Bedrock invoke_model API with payload:", json.dumps(request_payload))
         # invoke_model APIを呼び出し
         req = urllib.request.Request(
-                    url,
-                    data=json.dumps(request_payload),  # POSTなのでdataをセット
+                    api_url,
+                    data=json.dumps(request_payload).encode('utf-8'),  # POSTなのでdataをセット
                     headers={
                         'Content-Type': 'application/json'  # JSONで送る場合は必須
                     },
@@ -100,8 +100,8 @@ def lambda_handler(event, context):
                 )
         
         # リクエスト送信 ＆ レスポンス受信
-        with urllib.request.urlopen(req) as response:
-            response_body = response.read().decode('utf-8')
+        with urllib.request.urlopen(req) as res:
+            response_body = json.loads(res.read().decode('utf-8'))
         # bedrock_client.invoke_model(
         #     modelId=MODEL_ID,
         #     body=json.dumps(request_payload),
@@ -117,7 +117,7 @@ def lambda_handler(event, context):
             raise Exception("No response content from the model")
         
         # アシスタントの応答を取得
-        assistant_response = response_body['generated_text'][0]['text']
+        assistant_response = response_body['generated_text']
         
         # アシスタントの応答を会話履歴に追加
         messages.append({
